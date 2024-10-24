@@ -49,5 +49,38 @@ mental-health-chatbot/
 
 ```
 
+# Installation and Setup
 
+## Prerequisites
+
+- **Python 3.8+** installed
+- **Pinecone** and **Groq API keys** for database and LLM access
+- **Streamlit** for building the web-based interface
+
+## Steps for Installation
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone https://github.com/yourusername/mental-health-chatbot.git
+   cd mental-health-chatbot
+   ```
+
+2. **Install packages**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3. **Setup config.py**:
+    ```bash
+    GROQ_API_KEY = os.getenv("Your_API_Key")
+    MODEL_NAME = "llama3-8b-8192"
+    TEMPERATURE = 0.7
+    ```
+4. **Run The Application**:
+   ```bash
+   streamlit run main.py
+   ```
+
+
+### Build with ❤️ by team harmoni.ai
 
