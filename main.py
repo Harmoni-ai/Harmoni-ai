@@ -1,9 +1,9 @@
 import streamlit as st
-import pyttsx3
 from src.bot import TherapyBot
 from config import GROQ_API_KEY, MODEL_NAME, TEMPERATURE
+from src.cbt_exercises import CBT_EXERCISES, get_personalized_exercises
 
-def main():
+def chat_page():
     st.title("Empathetic Mental Health Support Chat")
     st.write("I'm here to listen and support you with empathy. Remember, I'm an AI assistant and not a replacement for professional mental health care.")
 
@@ -24,65 +24,63 @@ def main():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # User input with voice interaction
-    col1, col2 = st.columns([3, 1])
+    # User input
+    prompt = st.chat_input("How are you feeling today?")
 
-    with col1:
-        prompt = st.chat_input("How are you feeling today?")
+    if prompt:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    with col2:
-        # Button to capture voice input
-        if st.button("🎤 Speak"):
-            # JS code to capture voice
-            st.components.v1.html("""
-                <script>
-                    var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                    recognition.lang = 'en-US';
-                    recognition.interimResults = false;
-                    recognition.maxAlternatives = 1;
+        # Generate and display assistant response
+        with st.chat_message("assistant"):
+            response = st.session_state.bot.generate_response(
+                prompt,
+                chat_history=st.session_state.messages[:-1]  # Exclude current message
+            )
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
-                    recognition.start();
+def cbt_exercise_page():
+    st.title("CBT Exercises")
+    
+    # Mood Assessment
+    st.write("To get personalized CBT exercise recommendations, please select your current mood:")
+    mood = st.selectbox("Select your mood:", ["Neutral", "Anxious", "Depressed", "Stressed", "Happy"])
+    
+    if st.button("Get Recommendations"):
+        recommended_exercises = get_personalized_exercises(mood)
+        st.write("We recommend the following exercises for you:")
+        for exercise in recommended_exercises:
+            st.write(f"- {exercise}")
 
-                    recognition.onresult = function(event) {
-                        const transcript = event.results[0][0].transcript;
-                        const streamlitInput = document.getElementById("voice_input");
-                        streamlitInput.value = transcript;
-                        streamlitInput.dispatchEvent(new Event('change'));
-                    };
+    # Exercise Selection
+    exercise = st.selectbox("Choose an exercise:", list(CBT_EXERCISES.keys()))
 
-                    recognition.onerror = function(event) {
-                        console.error('Error occurred in recognition: ' + event.error);
-                    };
-                </script>
-                <input type="text" id="voice_input" style="display:none;">
-            """)
-
-    # Process user input
-    if prompt or st.session_state.get('voice_input'):
-        user_input = prompt if prompt else st.session_state.get('voice_input', '')
+    if st.button("Start Exercise"):
+        exercise_info = CBT_EXERCISES[exercise]
+        st.write(f"### {exercise}")
+        st.write(exercise_info["description"])
+        st.write("### Steps:")
+        for step in exercise_info["steps"]:
+            st.write(step)
         
-        # Store the voice input in session state
-        if user_input:
-            st.session_state.messages.append({"role": "user", "content": user_input})
-            with st.chat_message("user"):
-                st.markdown(user_input)
+        # Journaling Input
+        st.write("### Reflection/Journaling")
+        journal_entry = st.text_area("Write your reflections after completing the exercise:")
+        
+        if st.button("Save Journal Entry"):
+            # Here we would save the journal entry to a file or database
+            st.success("Your journal entry has been saved!")
 
-            # Generate and display assistant response
-            with st.chat_message("assistant"):
-                response = st.session_state.bot.generate_response(
-                    user_input,
-                    chat_history=st.session_state.messages[:-1]  # Exclude current message
-                )
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+def main():
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ["Chat", "CBT Exercises"])
 
-            # Convert response to speech and play it
-            play_voice(response)
-
-def play_voice(text):
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+    if page == "Chat":
+        chat_page()
+    elif page == "CBT Exercises":
+        cbt_exercise_page()
 
 if __name__ == "__main__":
     main()

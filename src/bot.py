@@ -1,11 +1,13 @@
 import os
 from typing import Dict, List
+from .cbt_exercises import CBT_EXERCISES
 from .utils import detect_crisis_keywords, sanitize_input, format_chat_history
 from .prompts import CRISIS_KEYWORDS, CRISIS_RESPONSE, LOCATION_PROMPT, GENERAL_RESOURCES
 from .chain import create_therapy_chain
 from .events import EventTracker
 from config import EVENTS_DIR, EVENT_TRACKING
-from .resources import find_resources, get_location_based_resources  # Updated import
+from .resources import find_resources, get_location_based_resources
+
 
 class TherapyBot:
     def __init__(self, api_key: str, model_name: str, temperature: float):
@@ -28,6 +30,8 @@ class TherapyBot:
                 self.event_tracker.track_event("crisis_detected", {
                     "user_input": user_input,
                 })
+    def get_cbt_exercises(self):
+        return CBT_EXERCISES
 
     def generate_response(self, user_input: str, chat_history: List[Dict] = None) -> str:
         """Generate response using the LangChain conversation chain."""
